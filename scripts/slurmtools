@@ -1,0 +1,8 @@
+alias squeuewatch='watch "squeue -u $USER -o \"%.18i %.10P %.100j %.8u %.2t %.10M %.6D %R\""'
+alias squeuerun='watch "squeue -t running -u $USER -o '\''%.10i %.100j %.8u %.4t %.12M %.8C %.10m %.25N %r'\''"'
+alias squeuepend='watch "squeue -t pending -u $USER -o '\''%.10i %.100j %.8u %.4t %.12M %.8C %.10m %.25N %r'\''"'
+alias sqrun="watch squeue -u $USER -t running"
+alias sqpend="watch squeue -u $USER -t pending"
+alias sq="watch squeue -u $USER"
+alias sqruncount="watch 'squeue -u $USER -t running | wc -l'"
+alias sqpendcount="watch 'squeue -u $USER -t pending | wc -l'"
