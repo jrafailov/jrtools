@@ -1,8 +1,65 @@
 alias squeuewatch='watch "squeue -u $USER -o \"%.18i %.10P %.100j %.8u %.2t %.10M %.6D %R\""'
 alias squeuerun='watch "squeue -t running -u $USER -o '\''%.10i %.100j %.8u %.4t %.12M %.8C %.10m %.25N %r'\''"'
-alias squeuepend='watch "squeue -t pending -u $USER -o '\''%.10i %.100j %.8u %.4t %.12M %.8C %.10m %.25N %r'\''"'
+alias squeuerun_mem='watch "squeue -t running -u $USER -o '\''%.10i %.100j %.8u %.4t %.12M %.8C %.10m %.25N %r'\'' | sort -k7 -r"'
+alias squeuepend='watch "squeue --sort=i -t pending -u $USER -o '\''%.10i %.100j %.8u %.4t %.12M %.8C %.10m %.25N %r'\''"'
+alias squeuepend_mem='watch "squeue --sort=i -t pending -u $USER -o '\''%.10i %.100j %.8u %.4t %.12M %.8C %.10m %.25N %r'\'' | sort -k7 -nr"'
 alias sqrun="watch squeue -u $USER -t running"
 alias sqpend="watch squeue -u $USER -t pending"
 alias sq="watch squeue -u $USER"
 alias sqruncount="watch 'squeue -u $USER -t running | wc -l'"
 alias sqpendcount="watch 'squeue -u $USER -t pending | wc -l'"
+alias jobinfo='scontrol show job'
+
+REM ---------------------------------------------------------------------------
+REM Function: jobstderr
+REM Description:
+REM   Retrieves the path to the standard error file associated with a SLURM job 
+REM   and displays its contents continuously in real-time.
+REM Parameters:
+REM   job_id - The unique identifier for the SLURM job.
+REM Returns:
+REM   Exits with status 1 if:
+REM     - No job_id is provided.
+REM     - The standard error file path cannot be determined.
+REM Usage:
+REM   jobstderr <job_id>
+REM ---------------------------------------------------------------------------
+function jobstderr {
+ if [ -z "$1" ]; then
+ echo "Usage: jobstderr <job_id>"
+ return 1
+ fi
+ stderr_file=$(scontrol show job "$1" | grep -oP 'StdErr=\K\S+')
+ if [ -z "$stderr_file" ]; then
+ echo "StdErr file not found for job $1"
+ return 1
+ fi
+ tail -f "$stderr_file"
+}
+
+REM ---------------------------------------------------------------------------
+REM Function: jobcwd
+REM Description:
+REM   Changes the current working directory of the shell to the working directory
+REM   associated with a specified SLURM job.
+REM Parameters:
+REM   job_id - The unique identifier for the SLURM job.
+REM Returns:
+REM   Exits with status 1 if:
+REM     - No job_id is provided.
+REM     - The working directory information cannot be retrieved.
+REM Usage:
+REM   jobcwd <job_id>
+REM ---------------------------------------------------------------------------
+function jobcwd {
+ if [ -z "$1" ]; then
+ echo "Usage: jobcwd <job_id>"
+ return 1
+ fi
+ cwd=$(scontrol show job "$1" | grep -oP 'WorkDir=\K\S+')
+ if [ -z "$cwd" ]; then
+ echo "Working directory not found for job $1"
+ return 1
+ fi
+ cd "$cwd" && echo "Switched to $cwd"
+}
