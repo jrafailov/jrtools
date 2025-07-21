@@ -11,6 +11,33 @@ alias sqpendn="watch 'squeue -u $USER -t pending | wc -l'"
 alias job-info='scontrol show job'
 
 # ---------------------------------------------------------------------------
+# Function: squeuelab
+# Description:
+#   Displays the SLURM queue for all users found in the ~/lab/home directory.
+# Parameters:
+#   None
+# Returns:
+#   Exits with status 1 if ~/lab/home directory doesn't exist or is empty.
+# Usage:
+#   squeuelab
+# ---------------------------------------------------------------------------
+function squeuelab {
+	if [ ! -d ~/lab/home ]; then
+		echo "Error: ~/lab/home directory not found"
+		return 1
+	fi
+	
+	users=$(ls ~/lab/home 2>/dev/null)
+	if [ -z "$users" ]; then
+		echo "Error: No users found in ~/lab/home"
+		return 1
+	fi
+	
+	user_list=$(echo $users | tr ' ' ',')
+	squeue -u "$user_list" -o "%.18i %.10P %.100j %.8u %.2t %.10M %.6D %R"
+}
+
+# ---------------------------------------------------------------------------
 # Function: jobstderr
 # Description:
 #   Retrieves the path to the standard error file associated with a SLURM job 
@@ -24,7 +51,7 @@ alias job-info='scontrol show job'
 # Usage:
 #   jobstderr <job_id>
 # ---------------------------------------------------------------------------
-function job-stderr {
+function job_stderr {
  if [ -z "$1" ]; then
  echo "Usage: jobstderr <job_id>"
  return 1
@@ -51,7 +78,7 @@ function job-stderr {
 # Usage:
 #   jobcwd <job_id>
 # ---------------------------------------------------------------------------
-function job-cwd {
+function job_cwd {
  if [ -z "$1" ]; then
  echo "Usage: jobcwd <job_id>"
  return 1
