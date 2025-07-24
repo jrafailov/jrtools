@@ -90,3 +90,43 @@ function job_cwd {
  fi
  cd "$cwd" && echo "Switched to $cwd"
 }
+
+# ---------------------------------------------------------------------------
+# Function: scancelgrep
+# Description:
+#   Cancels all SLURM jobs for the current user that match a given pattern
+#   in their job names using grep.
+# Parameters:
+#   pattern - The pattern to search for in job names (required)
+# Returns:
+#   Exits with status 1 if no pattern is provided or no matching jobs found.
+# Usage:
+#   scancelgrep <pattern>
+# ---------------------------------------------------------------------------
+function scancelgrep {
+	if [ -z "$1" ]; then
+		echo "Usage: scancelgrep <pattern>"
+		return 1
+	fi
+	
+	local pattern="$1"
+	local job_ids=$(squeue -u $USER -h -o "%.18i %.100j" | grep "$pattern" | awk '{print $1}')
+	
+	if [ -z "$job_ids" ]; then
+		echo "No jobs found matching pattern: $pattern"
+		return 1
+	fi
+	
+	echo "Found jobs matching pattern '$pattern':"
+	squeue -u $USER -h -o "%.18i %.100j" | grep "$pattern"
+	echo
+	read -p "Cancel these jobs? (y/N): " confirm
+	
+	if [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]]; then
+		echo "$job_ids" | xargs scancel
+		echo "Jobs cancelled."
+	else
+		echo "Cancelled operation."
+	fi
+}
+
