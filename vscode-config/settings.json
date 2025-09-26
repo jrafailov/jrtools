@@ -1,0 +1,108 @@
+{
+  "workbench.iconTheme": "Monokai Pro Light Icons",
+  "editor.fontFamily": "\"PragmataProLiga Nerd Font\", Monaco, 'Courier New', monospace",
+  "workbench.settings.applyToAllProfiles": [
+    "editor.fontFamily"
+  ],
+  "editor.cursorStyle": "block-outline",
+  "terminal.integrated.defaultProfile.linux": "bash",
+  // "r.rpath.linux": "/gpfs/share/apps/R/4.3.2/bin/R",
+  // "r.rterm.linux": "/gpfs/share/apps/R/4.3.2/bin/R",
+  // "r.lsp.diagnostics": true,
+  //"r.rterm.linux": "/gpfs/share/apps/R/4.0.3/bin/R",
+  //"r.rpath.linux": "/gpfs/share/apps/R/4.0.3/bin/R",
+  "r.lsp.diagnostics": true,
+  "terminal.integrated.defaultLocation": "editor",
+  "editor.wordWrap": "on",
+  "[r]": {
+    "editor.formatOnSave": false
+  },
+  "r.lintr.linters": {
+    "assignment_linter": null,
+    "closed_curly_linter": null,
+    "commas_linter": null,
+    "commented_code_linter": null,
+    "cyclocomp_linter": null,
+    "equals_na_linter": null,
+    "function_left_parentheses_linter": null,
+    "infix_spaces_linter": null,
+    "line_length_linter": null,
+    "no_tab_linter": null,
+    "object_length_linter": null,
+    "object_name_linter": null,
+    "object_usage_linter": null,
+    "open_curly_linter": null,
+    "paren_brace_linter": null,
+    "pipe_continuation_linter": null,
+    "semicolon_terminator_linter": null,
+    "seq_linter": null,
+    "single_quotes_linter": null,
+    "spaces_inside_linter": null,
+    "spaces_left_parentheses_linter": null,
+    "trailing_blank_lines_linter": null,
+    "trailing_whitespace_linter": null,
+    "T_and_F_symbol_linter": null,
+    "undesirable_function_linter": null,
+    "undesirable_operator_linter": null
+  },
+  "editor.tabSize": 1,
+  "editor.insertSpaces": false,
+  "files.autoSave": "onFocusChange",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "never"
+  },
+  "diffEditor.ignoreTrimWhitespace": false,
+  "git.ignoredRepositories": [
+    "~/modules"
+  ],
+  "git.ignoreLegacyWarning": true,
+  "editor.minimap.enabled": false,
+  "editor.lineNumbers": "relative",
+  "editor.lineNumbersMinChars": 2,
+  "editor.renderLineHighlight": "none",
+  "editor.renderControlCharacters": false,
+  "editor.renderWhitespace": "all",
+  "editor.rulers": [
+    80
+  ],
+  "editor.scrollBeyondLastLine": false,
+  "editor.scrollbar.vertical": "hidden",
+  "editor.scrollbar.horizontal": "hidden",
+  "editor.glyphMargin": false,
+  "workbench.editor.tabActionCloseVisibility": false,
+  "editor.showFoldingControls": "never",
+  "editor.smoothScrolling": true,
+  "workbench.list.horizontalScrolling": true,
+  "editor.guides.indentation": false,
+  "editor.stickyScroll.enabled": false,
+  "git.openRepositoryInParentFolders": "never",
+  "C_Cpp.default.compilerPath": "/usr/bin/clang",
+  "codachi.position": "explorer",
+  //"remote.SSH.showLoginTerminal": true,
+  "remote.SSH.enableRemoteCommand": true,
+  "workbench.navigationControl.enabled": false,
+  "github.copilot.advanced": {
+    
+  },
+  "github.copilot.selectedCompletionModel": "o4-mini",
+  "github.copilot.chat.codeGeneration.useInstructionFiles": false,
+  "workbench.editor.tabSizing": "shrink",
+  "workbench.editor.tabActionLocation": "left",
+  "git.suggestSmartCommit": false,
+  "github.copilot.nextEditSuggestions.enabled": false,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false,
+    "r": true,
+    "latex": true
+  },
+  "security.workspace.trust.untrustedFiles": "open",
+  "workbench.colorTheme": "Tokyo Night Pro",
+  "terminal.integrated.commandsToSkipShell": [
+    "matlab.interrupt"
+  ],
+  "MATLAB.installPath": "/Applications/MATLAB_R2025a.app",
+  // "r.useRenvLibPath": true
+}

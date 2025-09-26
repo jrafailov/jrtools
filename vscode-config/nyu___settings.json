@@ -1,0 +1,58 @@
+{
+	"terminal.integrated.defaultLocation": "editor",
+	"terminal.integrated.profiles.linux": {
+		"bash (login)": {
+			"path": "/bin/bash",
+			"args": ["-l"]
+		}
+	},
+	"terminal.integrated.defaultProfile.linux": "bash (login)",
+	"r.lsp.debug": true,
+	"terminal.integrated.commandsToSkipShell": [
+		"workbench.action.terminal.scrollDown",
+		"workbench.action.terminal.scrollUp",
+		"workbench.action.terminal.scrollLeft",
+		"workbench.action.terminal.scrollRight"
+	],
+	"editor.autoIndent": "full",
+	"editor.formatOnType": true,
+	"disable-hardware-acceleration": true,
+	"r.rterm.linux": "/gpfs/share/apps/R/4.0.3/bin/R",
+ "r.rpath.linux": "/gpfs/share/apps/R/4.0.3/bin/R", 
+	//"r.rterm.linux": "/gpfs/share/apps/R/4.3.2/bin/R",
+ //"r.rpath.linux": "/gpfs/share/apps/R/4.3.2/bin/R",
+    "r.lintr.linters": {
+        "assignment_linter": null,
+        "closed_curly_linter": null,
+        "commas_linter": null,
+        "commented_code_linter": null,
+        "cyclocomp_linter": null,
+        "equals_na_linter": null,
+        "function_left_parentheses_linter": null,
+        "infix_spaces_linter": null,
+        "lin?e_length_linter": null,
+        "no_tab_linter": null,
+        "object_length_linter": null,
+        "object_name_linter": null,
+        "object_usage_linter": null,
+        "open_curly_linter": null,
+        "paren_brace_linter": null,
+        "pipe_continuation_linter": null,
+        "semicolon_terminator_linter": null,
+        "seq_linter": null,
+        "single_quotes_linter": null,
+        "spaces_inside_linter": null,
+        "spaces_left_parentheses_linter": null,
+        "trailing_blank_lines_linter": null,
+        "trailing_whitespace_linter": null,
+        "T_and_F_symbol_linter": null,
+        "undesirable_function_linter": null,
+        "undesirable_operator_linter": null
+    },
+    "r.useRenvLibPath": false,
+    "r.plot.defaults.colorTheme": "vscode",
+    "terminal.integrated.sendKeybindingsToShell": true,
+    "editor.inlayHints.fontFamily": "fon",
+    "editor.fontFamily": "\"Essential PragmataPro\", Monaco, 'Courier New', monospace",
+    "editor.renderWhitespace": "all"
+}
