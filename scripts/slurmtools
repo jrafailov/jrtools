@@ -10,6 +10,37 @@ alias sqrunn="watch 'squeue -u $USER -t running | wc -l'"
 alias sqpendn="watch 'squeue -u $USER -t pending | wc -l'"
 alias job-info='scontrol show job'
 
+hunt() {
+ case "$1" in
+  --mem)
+   ps -eo user:32,rss --no-headers \
+   | awk '{mem[$1]+=$2} END {for (u in mem) printf "%-32s %9.2f GiB\n", u, mem[u]/1024/1024}' \
+   | sort -k2,2nr
+   ;;
+
+  --cpu)
+   # Sum %CPU per user; convert to "core-equivalents" = sum(%CPU)/100
+   total_cores=$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN)
+   ps -eo user:32,pcpu --no-headers \
+   | awk -v ncores="${total_cores:-0}" '
+     {cpu[$1]+=$2}
+     END {
+      for (u in cpu) {
+       ce = cpu[u]/100.0
+       util = (ncores>0) ? (100.0*ce/ncores) : 0
+       printf "%-32s %9.2f cores (%6.2f%% of node)\n", u, ce, util
+      }
+     }' \
+   | sort -k2,2nr
+   ;;
+
+  *)
+   echo "usage: hunt_local --mem | --cpu" >&2
+   return 2
+   ;;
+ esac
+}
+
 # ---------------------------------------------------------------------------
 # Function: squeuelab
 # Description:
@@ -95,30 +126,66 @@ function job_cwd {
 # Function: scancelgrep
 # Description:
 #   Cancels all SLURM jobs for the current user that match a given pattern
-#   in their job names using grep.
+#   in their job names using grep. Optionally filter by job state.
 # Parameters:
 #   pattern - The pattern to search for in job names (required)
+#   -t state - Optional job state filter (all, running, pending). Default: all
 # Returns:
 #   Exits with status 1 if no pattern is provided or no matching jobs found.
 # Usage:
-#   scancelgrep <pattern>
+#   scancelgrep <pattern> [-t state]
+#   scancelgrep [-t state] <pattern>
 # ---------------------------------------------------------------------------
 function scancelgrep {
-	if [ -z "$1" ]; then
-		echo "Usage: scancelgrep <pattern>"
+	local pattern=""
+	local state="all"
+	
+	# Parse arguments
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+			-t)
+				if [[ -n "$2" && "$2" =~ ^(all|running|pending)$ ]]; then
+					state="$2"
+					shift 2
+				else
+					echo "Error: -t requires one of: all, running, pending"
+					return 1
+				fi
+				;;
+			*)
+				if [ -z "$pattern" ]; then
+					pattern="$1"
+					shift
+				else
+					echo "Error: Multiple patterns not supported"
+					return 1
+				fi
+				;;
+		esac
+	done
+	
+	if [ -z "$pattern" ]; then
+		echo "Usage: scancelgrep <pattern> [-t state]"
+		echo "       scancelgrep [-t state] <pattern>"
+		echo "States: all, running, pending (default: all)"
 		return 1
 	fi
 	
-	local pattern="$1"
-	local job_ids=$(squeue -u $USER -h -o "%.18i %.100j" | grep "$pattern" | awk '{print $1}')
+	# Build squeue command based on state
+	local squeue_cmd="squeue -u $USER -h -o \"%.18i %.100j\""
+	if [ "$state" != "all" ]; then
+		squeue_cmd="squeue -u $USER -t $state -h -o \"%.18i %.100j\""
+	fi
+	
+	local job_ids=$(eval $squeue_cmd | grep "$pattern" | awk '{print $1}')
 	
 	if [ -z "$job_ids" ]; then
-		echo "No jobs found matching pattern: $pattern"
+		echo "No jobs found matching pattern: $pattern (state: $state)"
 		return 1
 	fi
 	
-	echo "Found jobs matching pattern '$pattern':"
-	squeue -u $USER -h -o "%.18i %.100j" | grep "$pattern"
+	echo "Found jobs matching pattern '$pattern' (state: $state):"
+	eval $squeue_cmd | grep "$pattern"
 	echo
 	read -p "Cancel these jobs? (y/N): " confirm
 	
@@ -128,5 +195,66 @@ function scancelgrep {
 	else
 		echo "Cancelled operation."
 	fi
+}
+# ---------------------------------------------------------------------------
+# Function: reassign_jobs
+# Description:
+#   Reassigns SLURM jobs matching a pattern to specified partitions.
+#   By default, looks for pending jobs with 'nf-' in the job name.
+# Parameters:
+#   pattern - Pattern to search for in job names (default: 'nf-')
+#   -p|--partition - Comma-separated list of partitions (default: all available)
+#   -t|--state - Job state to filter (default: 'pending')
+#   -u|--user - Username to filter jobs (default: current user)
+#   --dry-run - Show what would be done without executing
+# Returns:
+#   Exits with status 0 on success, 1 on error.
+# Usage:
+#   reassign_jobs [pattern] [-p partitions] [-t state] [-u user] [--dry-run]
+# ---------------------------------------------------------------------------
+function reassign_jobs() {
+	local PARTS="cpu_short,cpu_medium,cpu_long,fn_short,fn_medium,fn_long,gpu4_dev,gpu4_short,gpu4_medium,gpu4_long,gpu8_short,gpu8_medium,gpu8_long,a100_short,a100_long"
+	local DRYRUN=0
+	local STATE="pending"
+	local USERNAME="${USER}"
+	local GREP_PATTERN=""
+	
+	# Parse arguments
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+			-p|--partition)
+				PARTS="$2"
+				shift 2
+				;;
+			*)
+				GREP_PATTERN="$1"
+				shift
+				;;
+		esac
+	done
+	
+	# Default grep pattern if none provided
+	GREP_PATTERN="${GREP_PATTERN:-nf-}"
+	
+	local JIDS
+	JIDS=($(squeue -t "$STATE" -u "$USERNAME" -h -o "%.18i %.50j" | awk -v pattern="$GREP_PATTERN" '$2 ~ pattern {print $1}'))
+	
+	if (( ${#JIDS[@]} == 0 )); then
+		echo "No jobs found for user '$USERNAME' in state '$STATE' with '$GREP_PATTERN' in job name."
+		return 0
+	fi
+	
+	echo "Reassigning ${#JIDS[@]} job(s) for user '$USERNAME' in state '$STATE' with '$GREP_PATTERN' in name to partitions: $PARTS"
+	
+	for jid in "${JIDS[@]}"; do
+		if (( DRYRUN )); then
+			echo "scontrol update JobId=$jid Partition=\"$PARTS\""
+			echo "scontrol requeue $jid"
+		elif scontrol update JobId="$jid" Partition="$PARTS"; then
+			echo "Updated partition for job $jid"
+		else
+			echo "Failed to update job $jid"
+		fi
+	done
 }
 
