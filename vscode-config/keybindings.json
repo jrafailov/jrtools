@@ -120,5 +120,21 @@
         "command": "workbench.action.terminal.sendSequence",
         "args": { "text": "\u0003" },
         "when": "terminalFocus"
+    },
+    {
+        "key": "alt+shift+left",
+        "command": "workbench.action.moveEditorToPreviousGroup"
+    },
+    {
+        "key": "alt+shift+right",
+        "command": "workbench.action.moveEditorToNextGroup"
+    },
+    {
+        "key": "alt+shift+up",
+        "command": "workbench.action.moveEditorToAboveGroup"
+    },
+    {
+        "key": "alt+shift+down",
+        "command": "workbench.action.moveEditorToBelowGroup"
     }
 ]
