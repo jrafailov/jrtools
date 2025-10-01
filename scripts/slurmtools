@@ -258,3 +258,133 @@ function reassign_jobs() {
 	done
 }
 
+
+# Function to update SSH config for NYU
+ud_nyu() {
+  local node=$1
+  local config_file="$HOME/.ssh/config"
+
+  if [ -z "$node" ]; then
+    # Auto-detect node by SSHing to nyu and finding dev partition job
+    echo "Auto-detecting NYU node..."
+    node=$(ssh -t nyu 'bash -l -c "squeue -u $USER --format=\"%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R\" | grep bash | head -1 | awk \"{print \\\$NF}\""')
+
+    if [ -z "$node" ]; then
+      echo "No bash job found. Checking tmux session and submitting job..."
+
+      # Connect to tmux session and run the most recent command
+      ssh -t nyu 'tmux attach -t vscode -c "send-keys Up Enter; detach"' 2>/dev/null || {
+        echo "Failed to attach to tmux session 'vscode'"
+        echo "Usage: ud nyu <node-name>"
+        return 1
+      }
+
+      echo "Submitted job via tmux. Waiting for node allocation..."
+
+      # Wait for job to start and get node
+      local attempts=0
+      local max_attempts=30
+      while [ $attempts -lt $max_attempts ]; do
+        sleep 5
+        node=$(ssh -t nyu 'bash -l -c "squeue -u $USER --format=\"%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R\" | grep bash | head -1 | awk \"{print \\\$NF}\""')
+        if [ -n "$node" ]; then
+          break
+        fi
+        attempts=$((attempts + 1))
+        echo "Still waiting... (attempt $attempts/$max_attempts)"
+      done
+
+      if [ -z "$node" ]; then
+        echo "Timeout waiting for job allocation"
+        return 1
+      fi
+    fi
+
+    echo "Found bash job running on node: $node"
+  fi
+
+  # Make a backup
+  cp "$config_file" "$config_file.bak"
+
+  # Update the HostName for nyunode
+  awk -v newhost="$node" '
+    $1 == "Host" && $2 == "nyunode" { in_nyunode = 1; print; next }
+    in_nyunode && $1 == "HostName" { $2 = newhost; in_nyunode = 0 }
+    { print }
+  ' "$config_file.bak" > "$config_file"
+
+  echo "Updated nyunode HostName to $node in $config_file"
+}
+
+# Function to update SSH config for NYGC
+ud_nygc() {
+  local node=$1
+  local config_file="$HOME/.ssh/config"
+
+  if [ -z "$node" ]; then
+    # Auto-detect node by SSHing to ne1 and finding dev partition job
+    echo "Auto-detecting NYGC node..."
+    node=$(ssh ne1 'squeue -u $USER --format="%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R" | grep dev | head -1 | awk "{print \$NF}"')
+
+    if [ -z "$node" ]; then
+      echo "No dev partition job found. Checking tmux session and submitting job..."
+
+      # Connect to tmux session and run the most recent command
+      ssh -t ne1 'tmux attach -t vscode -c "send-keys Up Enter; detach"' 2>/dev/null || {
+        echo "Failed to attach to tmux session 'vscode'"
+        echo "Usage: ud nygc <node-name>"
+        return 1
+      }
+
+      echo "Submitted job via tmux. Waiting for node allocation..."
+
+      # Wait for job to start and get node
+      local attempts=0
+      local max_attempts=30
+      while [ $attempts -lt $max_attempts ]; do
+        sleep 5
+        node=$(ssh ne1 'squeue -u $USER --format="%.18i %.9P %.8j %.8u %.2t %.10M %.6D %R" | grep dev | head -1 | awk "{print \$NF}"')
+        if [ -n "$node" ]; then
+          break
+        fi
+        attempts=$((attempts + 1))
+        echo "Still waiting... (attempt $attempts/$max_attempts)"
+      done
+
+      if [ -z "$node" ]; then
+        echo "Timeout waiting for job allocation"
+        return 1
+      fi
+    fi
+
+    echo "Found dev partition job running on node: $node"
+  fi
+
+  # Make a backup
+  cp "$config_file" "$config_file.bak"
+
+  # Update the HostName for nygc-ssh
+  awk -v newhost="$node" '
+    $1 == "Host" && $2 == "nygc-ssh" { in_nygc = 1; print; next }
+    in_nygc && $1 == "HostName" { $2 = newhost; in_nygc = 0 }
+    { print }
+  ' "$config_file.bak" > "$config_file"
+
+  echo "Updated nygc-ssh HostName to $node in $config_file"
+}
+
+# Main ud function to route to appropriate sub-function
+ud() {
+  case "$1" in
+    nyu)
+      ud_nyu "$2"
+      ;;
+    nygc)
+      ud_nygc "$2"
+      ;;
+    *)
+      echo "Usage: ud {nyu|nygc} <node-name>"
+      return 1
+      ;;
+  esac
+}
